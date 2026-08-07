@@ -46,9 +46,9 @@ export default function Sidebar({
 
     // clear cookie (if used)
     document.cookie =
-      "sgs_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+      "sss_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC";
 
-    window.location.href = "https://staging.sgs.swais.in";
+    window.location.href = "https://staging.sss.swais.in";
   };
 
   const handleClick = (item) => {
@@ -73,14 +73,14 @@ if (window.innerWidth <= 900) {
   <div className="logo-circle">
     <img
       src="/headmaster/school-logo.jpeg"
-      alt="SGS Logo"
+      alt="SSS Logo"
       width={80}
       height={80}
       className="school-logo"
     />
   </div>
 
-  <h2>SGS SCHOOL</h2>
+  <h2>SSS SCHOOL</h2>
   <p>Headmaster Dashboard</p>
 </div>
 

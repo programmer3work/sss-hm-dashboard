@@ -1,5 +1,5 @@
 const nextConfig = {
-  allowedDevOrigins: ["16.112.236.67"],
+  allowedDevOrigins: ["18.61.240.248"],
   basePath: '/headmaster',
 };
 

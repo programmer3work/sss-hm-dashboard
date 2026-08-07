@@ -14,7 +14,7 @@ export default function AcademicAnalytics({
   return (
     <div className="academic-analytics">
 
-      <h3>📊 Academic Analytics</h3>
+      <h3>📊 Student Assessment</h3>
 
       <p className="subtitle">
         Select a class, search a student and generate AI-powered insights.

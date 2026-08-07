@@ -10,8 +10,8 @@ export default function useAuthGuard() {
     const token = localStorage.getItem("token");
     const ssoRole = sessionStorage.getItem("userRole");
 
-    if (!token && ssoRole !== "Headmaster") {
-     window.location.href = "https://staging.sgs.swais.in";
-    }
+    //if (!token && ssoRole !== "Headmaster") {
+     //window.location.href = "https://staging.sss.swais.in";
+    //}
   }, []);
 }

@@ -9,9 +9,14 @@ router = APIRouter()
 def get_tours(db: Session = Depends(get_db)):
 
     query = """
-        SELECT tour_id, tour_name, location_name,
-               tour_date, incharge_name, students_count
-        FROM sgs_school_tours
+        SELECT
+            tour_id,
+            tour_name,
+            location_name,
+            tour_date,
+            incharge_name,
+            students_count
+        FROM sss_tour_master
         WHERE record_status = 'Active'
         ORDER BY tour_id DESC;
     """

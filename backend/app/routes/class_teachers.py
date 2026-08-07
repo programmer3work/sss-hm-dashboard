@@ -18,13 +18,27 @@ def get_class_teachers(db: Session = Depends(get_db)):
             c.academic_year,
             c.class_teacher_id,
 
-            u.full_name AS class_teacher_name,
-            u.email_id AS teacher_email,
-            u.mobile_no AS teacher_mobile
+            COALESCE(
+                t.full_name,
+                CONCAT_WS(' ', t.first_name, t.last_name),
+                'Not Assigned'
+            ) AS class_teacher_name,
 
-        FROM sgs_class_master c
-        LEFT JOIN sgs_users_masters u
-            ON c.class_teacher_id = u.user_id
+            COALESCE(
+                t.email_id,
+                t.email,
+                '-'
+            ) AS teacher_email,
+
+            COALESCE(
+                t.phone,
+                '-'
+            ) AS teacher_mobile
+
+        FROM sss_class_master c
+        LEFT JOIN sss_teacher_master t
+            ON c.class_teacher_id = t.teacher_id
+
         WHERE c.record_status = 'Active'
         ORDER BY c.class_id;
     """

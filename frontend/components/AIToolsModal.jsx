@@ -3,6 +3,8 @@
 import "./AIToolsModal.css";
 import AcademicAnalytics from "./AcademicAnalytics";
 import ReportPanel from "./ReportPanel";
+import TextToVoiceButton from "./TextToVoiceButton";
+
 import { useState } from "react";
 import axios from "axios";
 
@@ -14,9 +16,13 @@ import {
   LabelList,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
+  Legend,
 } from "recharts";
+
+// ==========================================
+// CHART COLORS
+// ==========================================
 
 const COLORS = [
   "#3B82F6",
@@ -27,361 +33,1293 @@ const COLORS = [
   "#06B6D4",
 ];
 
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+
+
+// ==========================================
+// TEAMMATE AI BACKEND
+// ==========================================
+
+const aiApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_AI_API_BASE_URL,
 });
 
-export default function AIToolsModal({ open, onClose, headmaster }) {
-  // =======================
-  // ALL HOOKS FIRST (FIX)
-  // =======================
-  
+export default function AIToolsModal({
+  open,
+  onClose,
+  headmaster,
+}) {
+  // ==========================================
+  // STATES
+  // ==========================================
+
   const [selectedReport, setSelectedReport] = useState("");
+
   const [report, setReport] = useState("");
+
   const [analyticsData, setAnalyticsData] = useState(null);
+
   const [loading, setLoading] = useState(false);
 
+  // Student Assessment
   const [student, setStudent] = useState("");
   const [subject, setSubject] = useState("All Subjects");
+
+  // Class Assessment
   const [selectedClass, setSelectedClass] = useState("");
-  
+
+  // Teacher Assessment
+  const [teacher, setTeacher] = useState("");
+
+  // Translation
   const [language, setLanguage] = useState("English");
   const [originalReport, setOriginalReport] = useState("");
-  const [isTranslating, setIsTranslating] = useState(false);
-  // NOW SAFE CONDITIONAL RETURN
+  const [isTranslating, setIsTranslating] =
+    useState(false);
+
+
+  //audio translation
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [audioTranslation, setAudioTranslation] = useState("");
+
+  // ==========================================
+  // SAFE CONDITIONAL RETURN
+  // ==========================================
+
   if (!open) return null;
+
+  // ==========================================
+  // RESET REPORT DATA
+  // ==========================================
+
+  const resetReportData = () => {
+    setAnalyticsData(null);
+    setReport("");
+    setOriginalReport("");
+    setLanguage("English");
+  };
+
+  // ==========================================
+  // GENERATE REPORT
+  // ==========================================
 
   const generateReport = async () => {
     if (!selectedReport) {
-      alert("Please select a report.");
+      alert("Please select an assessment.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const payload = {
-        user_info: {
-          name: headmaster?.name || "",
-          email: headmaster?.email || "",
-          role: "Headmaster",
-        },
-      };
+      // ======================================
+      // CLASS ASSESSMENT
+      // ======================================
 
-      if (selectedReport === "assignment") {
-        const res = await api.post("/headmaster/assignment-report", payload);
-        setOriginalReport(res.data.report);
-        setReport(res.data.report);
-        setAnalyticsData(null);
-        setLanguage("English");
-      } 
-      else if (selectedReport === "teacher") {
-        const res = await api.post("/headmaster/teacher-performance", payload);
-        setOriginalReport(res.data.report);
-        setReport(res.data.report);
-        setAnalyticsData(null);
-        setLanguage("English");
-      } 
-      else if (selectedReport === "analytics") {
-        if (!student.trim()) {
-          alert("Please enter student name.");
-          setLoading(false);
+      if (selectedReport === "class") {
+        if (!selectedClass.trim()) {
+          alert("Please enter class.");
           return;
         }
 
-        const res = await api.post("/headmaster/academic-analytics", {
-          target_name: student.trim(),
-          target_type: "student",
-          class_name: selectedClass,
-          subject: subject,
-          scope: subject === "All Subjects" ? "all_subjects" : "single_subject",
-          user_info: payload.user_info,
-        });
+        const payload = {
+          class_name: selectedClass.trim(),
+          metrics: {},
+          user_email: headmaster?.email || "",
+          client_name: "SSS",
+        };
 
-      setAnalyticsData(res.data);
-setOriginalReport(JSON.stringify(res.data.analysis));
-setReport("");
+        console.log(
+          "Class Assessment Payload:",
+          payload
+        );
+
+        const res = await aiApi.post(
+          "/api/hm/assess/classroom",
+          payload
+        );
+
+        console.log(
+          "Class Assessment Response:",
+          res.data
+        );
+
+        const classReport =
+          res.data?.assessment_report || null;
+
+        setAnalyticsData(classReport);
+
+        setOriginalReport(
+          JSON.stringify(classReport || {})
+        );
+
+        setReport("");
+        setLanguage("English");
       }
-    } catch (err) {
-      console.error(err);
-      setReport("Failed to generate report.");
+
+      // ======================================
+      // TEACHER ASSESSMENT
+      // ======================================
+
+      else if (selectedReport === "teacher") {
+        if (!teacher.trim()) {
+          alert("Please enter teacher name.");
+          return;
+        }
+
+        const payload = {
+          teacher_name: teacher.trim(),
+          metrics: {},
+          user_email: headmaster?.email || "",
+          client_name: "SSS",
+        };
+
+        console.log(
+          "Teacher Assessment Payload:",
+          payload
+        );
+
+        const res = await aiApi.post(
+          "/api/hm/assess/teacher",
+          payload
+        );
+
+        console.log(
+          "Teacher Assessment Response:",
+          res.data
+        );
+
+        const teacherReport =
+          res.data?.assessment_report || "";
+
+        setReport(teacherReport);
+        setOriginalReport(teacherReport);
+
+        setAnalyticsData(null);
+        setLanguage("English");
+      }
+
+      // ======================================
+      // STUDENT ASSESSMENT
+      // ======================================
+
+      else if (selectedReport === "student") {
+        if (!student.trim()) {
+          alert("Please enter student name.");
+          return;
+        }
+
+        const payload = {
+          student_name: student.trim(),
+
+          metrics: {
+            class_name: selectedClass,
+            subject: subject,
+          },
+
+          user_email: headmaster?.email || "",
+          client_name: "SSS",
+        };
+
+        console.log(
+          "Student Assessment Payload:",
+          payload
+        );
+
+        const res = await aiApi.post(
+          "/api/hm/assess/student",
+          payload
+        );
+
+        console.log(
+          "Student Assessment Response:",
+          res.data
+        );
+
+        const studentReport =
+          res.data?.assessment_report || null;
+
+        setAnalyticsData(studentReport);
+
+        setOriginalReport(
+          JSON.stringify(studentReport || {})
+        );
+
+        setReport("");
+        setLanguage("English");
+      }
+    } catch (error) {
+      console.error(
+        "Assessment API Error:",
+        error?.response?.data || error
+      );
+
+      alert(
+        error?.response?.data?.detail ||
+          "Failed to generate assessment."
+      );
     } finally {
       setLoading(false);
     }
   };
+
+// ==========================================
+// TRANSLATION HELPER
+// ==========================================
+
+const translateText = async (text, targetLanguage) => {
+  if (!text) return text;
+
+  const res = await aiApi.post(
+    "/api/hm/translate",
+    {
+      text,
+      target_language: targetLanguage,
+      user_email: headmaster?.email || "",
+      client_name: "SSS",
+    }
+  );
+
+  console.log("Translation API Response:", res.data);
+
+  return res.data?.translated_text || text;
+};
+
+
+// ==========================================
+// TRANSLATION
+// ==========================================
+
 const translateContent = async (selectedLanguage) => {
+  if (!originalReport) {
+    return;
+  }
+
+  setIsTranslating(true);
+
   try {
-    // Restore original English
+    // ======================================
+    // RESTORE ENGLISH
+    // ======================================
+
     if (selectedLanguage === "English") {
-      if (selectedReport === "analytics") {
-        setAnalyticsData((prev) => ({
-          ...prev,
-          analysis: JSON.parse(originalReport),
-        }));
-      } else {
+      if (selectedReport === "teacher") {
         setReport(originalReport);
       }
+
+      if (
+        selectedReport === "class" ||
+        selectedReport === "student"
+      ) {
+        try {
+          const originalData =
+            JSON.parse(originalReport);
+
+          setAnalyticsData(originalData);
+        } catch (error) {
+          console.error(
+            "Restore English Error:",
+            error
+          );
+        }
+      }
+
       return;
     }
 
-    setIsTranslating(true);
+    // ======================================
+    // TEACHER ASSESSMENT
+    // ======================================
 
-    let textToTranslate = "";
+    if (selectedReport === "teacher") {
+      const translatedReport =
+        await translateText(
+          originalReport,
+          selectedLanguage
+        );
 
-    if (selectedReport === "analytics") {
-     if (!analyticsData?.analysis) return;
+      setReport(translatedReport);
 
-textToTranslate = JSON.stringify(analyticsData.analysis);
-    } else {
-      textToTranslate = originalReport;
+      return;
     }
 
-    const res = await api.post("/headmaster/translate", {
-      text: textToTranslate,
-      target_language: selectedLanguage,
-      user_info: {
-        name: headmaster?.name || "",
-        email: headmaster?.email || "",
-        role: "Headmaster",
-      },
-    });
+    // ======================================
+    // PARSE ORIGINAL JSON
+    // ======================================
 
-    if (selectedReport === "analytics") {
-      let translatedAnalysis;
+    let originalData = {};
 
-      try {
-        translatedAnalysis = JSON.parse(res.data.translated);
-      } catch {
-        translatedAnalysis = {
-          trend: res.data.translated,
-          strengths: "",
-          weaknesses: "",
-          recommendations: "",
-        };
-      }
+    try {
+      originalData =
+        JSON.parse(originalReport);
+    } catch (error) {
+      console.error(
+        "Original Report Parse Error:",
+        error
+      );
 
-      setAnalyticsData((prev) => ({
-        ...prev,
-        analysis: translatedAnalysis,
-      }));
-    } else {
-      setReport(res.data.translated);
+      return;
+    }
+
+    // ======================================
+    // CLASS ASSESSMENT
+    // ======================================
+
+    if (selectedReport === "class") {
+      const translatedSummary =
+        await translateText(
+          originalData.macro_summary || "",
+          selectedLanguage
+        );
+
+      const translatedTopAreas =
+        await Promise.all(
+          (
+            originalData.top_performing_areas || []
+          ).map((item) =>
+            translateText(
+              String(item),
+              selectedLanguage
+            )
+          )
+        );
+
+      const translatedIntervention =
+        await Promise.all(
+          (
+            originalData.areas_needing_intervention || []
+          ).map((item) =>
+            translateText(
+              String(item),
+              selectedLanguage
+            )
+          )
+        );
+
+      const translatedRecommendations =
+        await Promise.all(
+          (
+            originalData.teacher_recommendations || []
+          ).map((item) =>
+            translateText(
+              String(item),
+              selectedLanguage
+            )
+          )
+        );
+
+      setAnalyticsData({
+        ...originalData,
+
+        macro_summary:
+          translatedSummary,
+
+        top_performing_areas:
+          translatedTopAreas,
+
+        areas_needing_intervention:
+          translatedIntervention,
+
+        teacher_recommendations:
+          translatedRecommendations,
+
+        chart_data:
+          originalData.chart_data || [],
+      });
+
+      return;
+    }
+
+    // ======================================
+    // STUDENT ASSESSMENT
+    // ======================================
+
+    if (selectedReport === "student") {
+      const translatedSummary =
+        await translateText(
+          originalData.executive_summary || "",
+          selectedLanguage
+        );
+
+      const translatedStrengths =
+        await Promise.all(
+          (
+            originalData.strengths || []
+          ).map((item) =>
+            translateText(
+              String(item),
+              selectedLanguage
+            )
+          )
+        );
+
+      const translatedImprovement =
+        await Promise.all(
+          (
+            originalData.areas_for_improvement || []
+          ).map((item) =>
+            translateText(
+              String(item),
+              selectedLanguage
+            )
+          )
+        );
+
+      const translatedActions =
+        await Promise.all(
+          (
+            originalData.recommended_actions || []
+          ).map((item) =>
+            translateText(
+              String(item),
+              selectedLanguage
+            )
+          )
+        );
+
+      setAnalyticsData({
+        ...originalData,
+
+        executive_summary:
+          translatedSummary,
+
+        strengths:
+          translatedStrengths,
+
+        areas_for_improvement:
+          translatedImprovement,
+
+        recommended_actions:
+          translatedActions,
+
+        chart_data:
+          originalData.chart_data || [],
+      });
     }
   } catch (error) {
-    console.error("Translation Error:", error);
+    console.error(
+      "Translation Error:",
+      error?.response?.data || error
+    );
+
+    alert(
+      error?.response?.data?.detail ||
+        "Translation failed."
+    );
   } finally {
     setIsTranslating(false);
   }
 };
-  // =======================
-  // SAFE DATA HANDLING
-  // =======================
-  const analysis = analyticsData?.analysis || {};
 
-  const chartData = Array.isArray(analyticsData?.chartData)
-    ? analyticsData.chartData.map((item) => ({
-        subject: item.subject ?? item.test ?? item.student ?? "Unknown",
-        score: Number(item.score) || 0,
-      }))
-    : [];
+  // ==========================================
+  // SAFE DATA
+  // ==========================================
+
+  const analysis = analyticsData || {};
+
+  // ==========================================
+  // STUDENT CHART
+  //
+  // API:
+  // chart_data:
+  // [
+  //   {
+  //     subject: "Mathematics",
+  //     score: 88,
+  //     class_average: 78
+  //   }
+  // ]
+  // ==========================================
+
+  const studentChartData =
+    selectedReport === "student" &&
+    Array.isArray(analysis?.chart_data)
+      ? analysis.chart_data.map((item) => ({
+          subject:
+            item.subject ??
+            item.test ??
+            "Unknown",
+
+          score:
+            Number(item.score) || 0,
+
+          class_average:
+            Number(item.class_average) || 0,
+        }))
+      : [];
+
+  // ==========================================
+  // CLASS CHART
+  //
+  // API:
+  // chart_data:
+  // [
+  //   {
+  //     metric_name: "...",
+  //     value: 0
+  //   }
+  // ]
+  // ==========================================
+
+  const classChartData =
+    selectedReport === "class" &&
+    Array.isArray(analysis?.chart_data)
+      ? analysis.chart_data.map((item) => ({
+          metric_name:
+            item.metric_name ?? "Unknown",
+
+          value:
+            Number(item.value) || 0,
+        }))
+      : [];
+
+    // ==========================================
+// TEXT FOR TEXT-TO-VOICE
+// ==========================================
+
+let textToSpeak = "";
+
+// Teacher Assessment
+if (selectedReport === "teacher") {
+  textToSpeak = report || "";
+}
+
+// Class Assessment
+if (selectedReport === "class") {
+  textToSpeak = [
+    analyticsData?.macro_summary,
+
+    ...(analyticsData?.top_performing_areas || []),
+
+    ...(analyticsData?.areas_needing_intervention || []),
+
+    ...(analyticsData?.teacher_recommendations || []),
+  ]
+    .filter(Boolean)
+    .join(". ");
+}
+
+// Student Assessment
+if (selectedReport === "student") {
+  textToSpeak = [
+    analyticsData?.executive_summary,
+
+    ...(analyticsData?.strengths || []),
+
+    ...(analyticsData?.areas_for_improvement || []),
+
+    ...(analyticsData?.recommended_actions || []),
+  ]
+    .filter(Boolean)
+    .join(". ");
+}
+
+  // ==========================================
+  // RENDER ARRAY / STRING SAFELY
+  // ==========================================
+
+  const renderItems = (items) => {
+    if (!items) {
+      return <p>No data available.</p>;
+    }
+
+    // Array
+    if (Array.isArray(items)) {
+      if (items.length === 0) {
+        return <p>No data available.</p>;
+      }
+
+      return (
+        <ul className="analysis-list">
+          {items.map((item, index) => (
+            <li key={index}>
+              {typeof item === "object"
+                ? JSON.stringify(item)
+                : String(item)}
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    // String
+    if (typeof items === "string") {
+      return <p>{items}</p>;
+    }
+
+    // Object
+    if (typeof items === "object") {
+      return (
+        <ul className="analysis-list">
+          {Object.entries(items).map(
+            ([key, value]) => (
+              <li key={key}>
+                <strong>{key}: </strong>
+
+                {typeof value === "object"
+                  ? JSON.stringify(value)
+                  : String(value)}
+              </li>
+            )
+          )}
+        </ul>
+      );
+    }
+
+    return <p>{String(items)}</p>;
+  };
+
+  // ==========================================
+  // MAIN UI
+  // ==========================================
 
   return (
     <div className="ai-modal-overlay">
       <div className="ai-modal">
 
-        {/* HEADER */}
+        {/* ==================================
+            HEADER
+        ================================== */}
+
         <div className="ai-modal-header">
           <h2>🤖 AI Tools</h2>
-          <button className="close-btn" onClick={onClose}>
+
+          <button
+            className="close-btn"
+            onClick={onClose}
+          >
             ✖
           </button>
         </div>
 
         <div className="ai-modal-body">
 
-          {/* LEFT PANEL */}
+          {/* ==================================
+              LEFT PANEL
+          ================================== */}
+
           <div className="ai-left">
 
-            <button
-              className={`ai-card ${selectedReport === "assignment" ? "active" : ""}`}
-           onClick={() => {
-  setSelectedReport("assignment");
-  setAnalyticsData(null);
-  setReport("");
-  setLanguage("English");
-}}
-            >
-              📋 Assignment Report
-            </button>
+            {/* ==============================
+                CLASS ASSESSMENT BUTTON
+            ============================== */}
 
             <button
-              className={`ai-card ${selectedReport === "teacher" ? "active" : ""}`}
-               onClick={() => {
-  setSelectedReport("teacher");
-  setAnalyticsData(null);
-  setReport("");
-  setLanguage("English");
-}}
+              className={`ai-card ${
+                selectedReport === "class"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() => {
+                setSelectedReport("class");
+                resetReportData();
+              }}
             >
-              👨‍🏫 Teacher Performance
+              🏫 Class Assessment
             </button>
 
+            {/* ==============================
+                TEACHER ASSESSMENT BUTTON
+            ============================== */}
+
             <button
-              className={`ai-card ${selectedReport === "analytics" ? "active" : ""}`}
-            onClick={() => {
-  setSelectedReport("analytics");
-  setAnalyticsData(null);
-  setReport("");
-  setLanguage("English");
-}}
+              className={`ai-card ${
+                selectedReport === "teacher"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() => {
+                setSelectedReport("teacher");
+                resetReportData();
+              }}
             >
-              📊 Academic Analytics
+              👨‍🏫 Teacher Assessment
             </button>
+
+            {/* ==============================
+                STUDENT ASSESSMENT BUTTON
+            ============================== */}
+
+            <button
+              className={`ai-card ${
+                selectedReport === "student"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() => {
+                setSelectedReport("student");
+                resetReportData();
+              }}
+            >
+              📊 Student Assessment
+            </button>
+
+            {/* ==============================
+                GENERATE BUTTON
+            ============================== */}
 
             <button
               className="generate-btn"
               onClick={generateReport}
               disabled={loading}
             >
-              {loading ? "Generating..." : "Generate Report"}
+              {loading
+                ? "Generating..."
+                : "Generate Report"}
             </button>
           </div>
 
+          {/* ==================================
+              RIGHT PANEL
+          ================================== */}
 
-          {/* RIGHT PANEL */}
           <div className="ai-right">
-    <div className="language-bar">
 
-  <label>Select Language</label>
+            {/* ==================================
+                LANGUAGE
+            ================================== */}
 
-  <select
-    className="language-select"
-    value={language}
-    onChange={(e) => {
-      const lang = e.target.value;
-      setLanguage(lang);
-      translateContent(lang);
-    }}
-  >
-    <option value="English">English</option>
-    <option value="Telugu">Telugu</option>
-    <option value="Hindi">Hindi</option>
-    <option value="Tamil">Tamil</option>
-    <option value="Kannada">Kannada</option>
-  </select>
+            <div className="language-bar">
+              <label>Select Language</label>
 
-</div>
-<div className="content-panel">
+              <select
+                className="language-select"
+                value={language}
+                disabled={isTranslating || !originalReport}
+                onChange={(e) => {
+                  const lang =
+                    e.target.value;
 
-  {/* ================= Assignment ================= */}
+                  setLanguage(lang);
 
-  {selectedReport === "assignment" && (
-    <ReportPanel
-      title="Assignment Report"
-      icon="📋"
-      report={report}
-      previewTitle="Assignment Report Preview"
-      previewText="Select Assignment Report and click Generate Report."
-    />
-  )}
+                  translateContent(lang);
+                }}
+              >
+                <option value="English">
+                  English
+                </option>
 
-  {/* ================= Teacher ================= */}
+                <option value="Telugu">
+                  Telugu
+                </option>
 
-  {selectedReport === "teacher" && (
-    <ReportPanel
-      title="Teacher Performance"
-      icon="👨‍🏫"
-      report={report}
-      previewTitle="Teacher Performance Preview"
-      previewText="Select Teacher Performance and click Generate Report."
-    />
-  )}
+                <option value="Hindi">
+                  Hindi
+                </option>
 
-  {/* ================= Academic Analytics ================= */}
+                <option value="Tamil">
+                  Tamil
+                </option>
 
-  {selectedReport === "analytics" && (
-    <>
-      {!analyticsData && (
-        <AcademicAnalytics
-          selectedClass={selectedClass}
-          setSelectedClass={setSelectedClass}
-          student={student}
-          setStudent={setStudent}
-          subject={subject}
-          setSubject={setSubject}
-        />
-      )}
+                <option value="Kannada">
+                  Kannada
+                </option>
+              </select>
+                <TextToVoiceButton
+    text={textToSpeak}
+    language={language}
+    userEmail={headmaster?.email || ""}
+  />
 
-      {analyticsData && (
-        <>
-          <h3 className="analytics-title">
-            📊 Academic Analytics
-          </h3>
+              {isTranslating && (
+                <span>
+                  Translating...
+                </span>
+              )}
+            </div>
 
-          <h4 className="chart-title">
-            AI Analysis
-          </h4>
+            <div className="content-panel">
 
-          <div className="analysis-container">
+              {/* ==================================
+                  CLASS ASSESSMENT
+              ================================== */}
 
-            <h4>Trend</h4>
-            <p>{analysis.trend}</p>
+              {selectedReport === "class" && (
+                <>
 
-            <h4>Strengths</h4>
-            <p>{analysis.strengths}</p>
+                  {/* Before Generate */}
 
-            <h4>Weaknesses</h4>
-            <p>{analysis.weaknesses}</p>
+                  {!analyticsData && (
+                    <div className="analysis-container">
 
-            <h4>Recommendations</h4>
-            <p>{analysis.recommendations}</p>
+                      <h3 className="analytics-title">
+                        🏫 Class Assessment
+                      </h3>
 
-          </div>
+                      <label>
+                        Class Name
+                      </label>
 
-          <h4 className="chart-title">
-            📊 Performance Overview
-          </h4>
+                      <input
+                        type="text"
+                        value={selectedClass}
+                        placeholder="Example: 8"
+                        onChange={(e) =>
+                          setSelectedClass(
+                            e.target.value
+                          )
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "12px",
+                          marginTop: "8px",
+                          borderRadius: "8px",
+                          border:
+                            "1px solid #ccc",
+                        }}
+                      />
 
-          <div className="chart-container">
+                      <p
+                        style={{
+                          marginTop: "12px",
+                        }}
+                      >
+                        Enter class name and click
+                        Generate Report.
+                      </p>
+                    </div>
+                  )}
 
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={chartData}>
+                  {/* After Generate */}
 
-               
+                  {analyticsData && (
+                    <>
 
-                <XAxis dataKey="subject" />
+                      <h3 className="analytics-title">
+                        🏫 Class Assessment
+                      </h3>
 
-                <YAxis domain={[0,100]} />
+                      {/* =========================
+                          MACRO SUMMARY
+                      ========================= */}
 
-                <Tooltip />
+                      {analysis.macro_summary && (
+                        <>
+                          <h4 className="chart-title">
+                            AI Analysis
+                          </h4>
 
-                <Bar dataKey="score">
+                          <div className="analysis-container">
+                            <p>
+                              {
+                                analysis.macro_summary
+                              }
+                            </p>
+                          </div>
+                        </>
+                      )}
 
-                  <LabelList
-                    dataKey="score"
-                    position="top"
-                  />
+                      {/* =========================
+                          TOP PERFORMING AREAS
+                      ========================= */}
 
-                  {chartData.map((_, index) => (
-                    <Cell
-                      key={index}
-                      fill={COLORS[index % COLORS.length]}
+                      {analysis.top_performing_areas && (
+                        <>
+                          <h4 className="chart-title">
+                            ✅ Top Performing Areas
+                          </h4>
+
+                          <div className="analysis-container">
+                            {renderItems(
+                              analysis.top_performing_areas
+                            )}
+                          </div>
+                        </>
+                      )}
+
+                      {/* =========================
+                          AREAS NEEDING INTERVENTION
+                      ========================= */}
+
+                      {analysis.areas_needing_intervention && (
+                        <>
+                          <h4 className="chart-title">
+                            📌 Areas Needing
+                            Intervention
+                          </h4>
+
+                          <div className="analysis-container">
+                            {renderItems(
+                              analysis.areas_needing_intervention
+                            )}
+                          </div>
+                        </>
+                      )}
+
+                      {/* =========================
+                          TEACHER RECOMMENDATIONS
+                      ========================= */}
+
+                      {analysis.teacher_recommendations && (
+                        <>
+                          <h4 className="chart-title">
+                            💡 Teacher Recommendations
+                          </h4>
+
+                          <div className="analysis-container">
+                            {renderItems(
+                              analysis.teacher_recommendations
+                            )}
+                          </div>
+                        </>
+                      )}
+
+                      {/* =========================
+                          CLASS CHART
+                      ========================= */}
+
+                      {classChartData.length >
+                        0 && (
+                        <>
+                          <h4 className="chart-title">
+                            📊 Performance Overview
+                          </h4>
+
+                          <div className="chart-container">
+
+                            <ResponsiveContainer
+                              width="100%"
+                              height={350}
+                            >
+                              <BarChart
+                                data={
+                                  classChartData
+                                }
+                              >
+                                <XAxis
+                                  dataKey="metric_name"
+                                />
+
+                                <YAxis
+                                  domain={[
+                                    0,
+                                    100,
+                                  ]}
+                                />
+
+                                <Tooltip />
+
+                                <Bar
+                                  dataKey="value"
+                                  name="Value"
+                                >
+                                  <LabelList
+                                    dataKey="value"
+                                    position="top"
+                                  />
+
+                                  {classChartData.map(
+                                    (
+                                      _,
+                                      index
+                                    ) => (
+                                      <Cell
+                                        key={
+                                          index
+                                        }
+                                        fill={
+                                          COLORS[
+                                            index %
+                                              COLORS.length
+                                          ]
+                                        }
+                                      />
+                                    )
+                                  )}
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* ==================================
+                  TEACHER ASSESSMENT
+              ================================== */}
+
+              {selectedReport ===
+                "teacher" && (
+                <>
+
+                  {/* Before Generate */}
+
+                  {!report && (
+                    <div className="analysis-container">
+
+                      <h3 className="analytics-title">
+                        👨‍🏫 Teacher Assessment
+                      </h3>
+
+                      <label>
+                        Teacher Name
+                      </label>
+
+                      <input
+                        type="text"
+                        value={teacher}
+                        placeholder="Example: Sandipani Acharya"
+                        onChange={(e) =>
+                          setTeacher(
+                            e.target.value
+                          )
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "12px",
+                          marginTop: "8px",
+                          borderRadius: "8px",
+                          border:
+                            "1px solid #ccc",
+                        }}
+                      />
+
+                      <p
+                        style={{
+                          marginTop: "12px",
+                        }}
+                      >
+                        Enter teacher name and click
+                        Generate Report.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* After Generate */}
+
+                  {report && (
+                    <ReportPanel
+                      title="Teacher Assessment"
+                      icon="👨‍🏫"
+                      report={report}
+                      previewTitle="Teacher Assessment Preview"
+                      previewText="Enter teacher name and click Generate Report."
                     />
-                  ))}
+                  )}
+                </>
+              )}
 
-                </Bar>
+              {/* ==================================
+                  STUDENT ASSESSMENT
+              ================================== */}
 
-              </BarChart>
-            </ResponsiveContainer>
+              {selectedReport ===
+                "student" && (
+                <>
 
-          </div>
-        </>
-      )}
-    </>
-  )}
+                  {/* Student Input UI */}
 
-</div>
+                  {!analyticsData && (
+                    <AcademicAnalytics
+                      selectedClass={
+                        selectedClass
+                      }
+                      setSelectedClass={
+                        setSelectedClass
+                      }
+                      student={student}
+                      setStudent={setStudent}
+                      subject={subject}
+                      setSubject={setSubject}
+                    />
+                  )}
 
+                  {/* Student Result */}
+
+                  {analyticsData && (
+                    <>
+
+                      <h3 className="analytics-title">
+                        📊 Student Assessment
+                      </h3>
+
+                      {/* =========================
+                          EXECUTIVE SUMMARY
+                      ========================= */}
+
+                      {analysis.executive_summary && (
+                        <>
+                          <h4 className="chart-title">
+                            AI Analysis
+                          </h4>
+
+                          <div className="analysis-container">
+                            <p>
+                              {
+                                analysis.executive_summary
+                              }
+                            </p>
+                          </div>
+                        </>
+                      )}
+
+                      {/* =========================
+                          STRENGTHS
+                      ========================= */}
+
+                      {analysis.strengths && (
+                        <>
+                          <h4 className="chart-title">
+                            ✅ Strengths
+                          </h4>
+
+                          <div className="analysis-container">
+                            {renderItems(
+                              analysis.strengths
+                            )}
+                          </div>
+                        </>
+                      )}
+
+                      {/* =========================
+                          AREAS FOR IMPROVEMENT
+                      ========================= */}
+
+                      {analysis.areas_for_improvement && (
+                        <>
+                          <h4 className="chart-title">
+                            📌 Areas for
+                            Improvement
+                          </h4>
+
+                          <div className="analysis-container">
+                            {renderItems(
+                              analysis.areas_for_improvement
+                            )}
+                          </div>
+                        </>
+                      )}
+
+                      {/* =========================
+                          RECOMMENDED ACTIONS
+                      ========================= */}
+
+                      {analysis.recommended_actions && (
+                        <>
+                          <h4 className="chart-title">
+                            💡 Recommended Actions
+                          </h4>
+
+                          <div className="analysis-container">
+                            {renderItems(
+                              analysis.recommended_actions
+                            )}
+                          </div>
+                        </>
+                      )}
+
+                      {/* =========================
+                          STUDENT CHART
+                      ========================= */}
+
+                      {studentChartData.length >
+                        0 && (
+                        <>
+                          <h4 className="chart-title">
+                            📊 Performance Overview
+                          </h4>
+
+                          <div className="chart-container">
+
+                            <ResponsiveContainer
+                              width="100%"
+                              height={350}
+                            >
+                              <BarChart
+                                data={
+                                  studentChartData
+                                }
+                              >
+                                <XAxis
+                                  dataKey="subject"
+                                />
+
+                                <YAxis
+                                  domain={[
+                                    0,
+                                    100,
+                                  ]}
+                                />
+
+                                <Tooltip />
+
+                                <Legend />
+
+                                {/* Student Score */}
+
+                                <Bar
+                                  dataKey="score"
+                                  name="Student Score"
+                                >
+                                  <LabelList
+                                    dataKey="score"
+                                    position="top"
+                                  />
+
+                                  {studentChartData.map(
+                                    (
+                                      _,
+                                      index
+                                    ) => (
+                                      <Cell
+                                        key={`student-${index}`}
+                                        fill={
+                                          COLORS[
+                                            index %
+                                              COLORS.length
+                                          ]
+                                        }
+                                      />
+                                    )
+                                  )}
+                                </Bar>
+
+                                {/* Class Average */}
+
+                                <Bar
+                                  dataKey="class_average"
+                                  name="Class Average"
+                                  fill="#94A3B8"
+                                >
+                                  <LabelList
+                                    dataKey="class_average"
+                                    position="top"
+                                  />
+                                </Bar>
+
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* ==================================
+                  NOTHING SELECTED
+              ================================== */}
+
+              {!selectedReport && (
+                <div className="analysis-container">
+                  <h3>
+                    Select an AI Assessment
+                  </h3>
+
+                  <p>
+                    Choose Class Assessment,
+                    Teacher Assessment, or
+                    Student Assessment from the
+                    left side.
+                  </p>
+                </div>
+              )}
+
+            </div>
           </div>
         </div>
       </div>

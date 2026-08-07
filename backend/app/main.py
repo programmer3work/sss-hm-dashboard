@@ -7,7 +7,6 @@ from .routes import (
     dashboard_routes,
     notification_routes,
     class_teachers,
-    headmaster_routes,
     function_routes,
     tours_routes,
 )
@@ -26,7 +25,6 @@ app.include_router(student_routes.router, prefix="/students", tags=["Students"])
 app.include_router(teacher_routes.router, prefix="/teachers", tags=["Teachers"])
 app.include_router(dashboard_routes.router, prefix="/dashboard", tags=["Dashboard"])
 app.include_router(class_teachers.router, prefix="/class-teachers", tags=["Class Teachers"])
-app.include_router(headmaster_routes.router, prefix="/headmaster", tags=["Headmaster"])
 app.include_router(notification_routes.router, prefix="/notifications", tags=["Notifications"])
 app.include_router(function_routes.router, prefix="/functions", tags=["Functions"])
 app.include_router(tours_routes.router, prefix="/tours", tags=["Tours"])
