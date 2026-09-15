@@ -19,9 +19,13 @@ def get_tours(db: Session = Depends(get_db)):
             status
         FROM sss_tour_master
         WHERE record_status = 'Active'
-                    AND status IS NOT NULL
-                    AND NULLIF(BTRIM(status), '') IS NOT NULL
-                ORDER BY tour_date DESC NULLS LAST, tour_name ASC, tour_id DESC;
+            AND NULLIF(BTRIM(tour_name), '') IS NOT NULL
+            AND NULLIF(BTRIM(location_name), '') IS NOT NULL
+            AND tour_date IS NOT NULL
+            AND NULLIF(BTRIM(incharge_name), '') IS NOT NULL
+            AND students_count IS NOT NULL
+            AND NULLIF(BTRIM(status), '') IS NOT NULL
+        ORDER BY tour_date DESC, tour_name ASC, tour_id DESC;
     """
 
     result = db.execute(text(query)).mappings().all()

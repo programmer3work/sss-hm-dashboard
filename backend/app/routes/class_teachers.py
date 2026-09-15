@@ -41,6 +41,10 @@ def get_class_teachers(db: Session = Depends(get_db)):
 
                 WHERE c.record_status = 'Active'
                     AND c.class_teacher_id IS NOT NULL
+                    AND COALESCE(
+                        NULLIF(BTRIM(t.full_name), ''),
+                        NULLIF(BTRIM(CONCAT_WS(' ', t.first_name, t.last_name)), '')
+                    ) IS NOT NULL
                 ORDER BY c.class_name, c.section_name, c.class_id;
     """
 
