@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 
 const aiApi = axios.create({
@@ -17,16 +17,22 @@ export default function TextToVoiceButton({
 
   const audioRef = useRef(null);
 
+  const stopAudio = () => {
+    if (!audioRef.current) return;
+
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+    audioRef.current = null;
+    setIsSpeaking(false);
+  };
+
+  useEffect(() => () => stopAudio(), []);
+
   const handleTextToVoice = async () => {
     try {
       // Stop currently playing audio
       if (isSpeaking && audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-
-        audioRef.current = null;
-        setIsSpeaking(false);
-
+        stopAudio();
         return;
       }
 
@@ -110,7 +116,7 @@ export default function TextToVoiceButton({
     <button
       type="button"
       onClick={handleTextToVoice}
-      disabled={loading || !text?.trim()}
+      disabled={!text?.trim()}
       className="tts-btn"
     >
       {loading

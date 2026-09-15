@@ -33,6 +33,8 @@ const COLORS = [
   "#06B6D4",
 ];
 
+const hasFullName = (value) => value.trim().split(/\s+/).filter(Boolean).length >= 2;
+
 
 
 // ==========================================
@@ -204,8 +206,8 @@ export default function AIToolsModal({
       // ======================================
 
       else if (selectedReport === "student") {
-        if (!student.trim()) {
-          alert("Please enter student name.");
+        if (!hasFullName(student)) {
+          alert("Please enter the student's full name.");
           return;
         }
 

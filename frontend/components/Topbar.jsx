@@ -23,6 +23,7 @@ export default function Topbar({
   language,
   setLanguage,
   onOpenAI,
+  onOpenNotifications,
   sidebarOpen,
   setSidebarOpen,
 }) {
@@ -200,7 +201,13 @@ const handleVoiceInput = () => {
         </div>
 
         {/* Notification */}
-        <div className="notification-bell">
+        <button
+          className="notification-bell"
+          onClick={onOpenNotifications}
+          type="button"
+          title="Open notifications"
+          aria-label={`Open notifications${notificationCount ? ` (${notificationCount} unread)` : ""}`}
+        >
           <Bell size={18} />
 
           {notificationCount > 0 && (
@@ -208,7 +215,7 @@ const handleVoiceInput = () => {
               {notificationCount}
             </span>
           )}
-        </div>
+        </button>
       {/* SWAIS Brand */}
 {/* SWAIS Brand */}
 <div className="brand">

@@ -12,7 +12,7 @@ def get_notifications(db: Session = Depends(get_db)):
     query = """
         SELECT notice_id, notice_title, notice_text, notice_date, is_read
         FROM sss_notice_board
-        ORDER BY notice_id DESC;
+        ORDER BY notice_date DESC NULLS LAST, notice_id DESC;
     """
 
     result = db.execute(text(query)).mappings().all()

@@ -15,10 +15,13 @@ def get_tours(db: Session = Depends(get_db)):
             location_name,
             tour_date,
             incharge_name,
-            students_count
+            students_count,
+            status
         FROM sss_tour_master
         WHERE record_status = 'Active'
-        ORDER BY tour_id DESC;
+                    AND status IS NOT NULL
+                    AND NULLIF(BTRIM(status), '') IS NOT NULL
+                ORDER BY tour_date DESC NULLS LAST, tour_name ASC, tour_id DESC;
     """
 
     result = db.execute(text(query)).mappings().all()

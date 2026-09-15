@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import axios from "axios";
 
@@ -26,9 +26,6 @@ const api = axios.create({
 // ================= MAIN PAGE =================
 export default function HomePage() {
   useAuthGuard();
-  const fetched = useRef(false);
-  
-
   const [activeTab, setActiveTab] = useState("dashboard");
   const [loading, setLoading] = useState(false);
 
@@ -75,8 +72,10 @@ const [originalToursData, setOriginalToursData] = useState([]);
 
   // ================= DASHBOARD LOAD =================
   useEffect(() => {
-    if (fetched.current) return;
-    fetched.current = true;
+    let mounted = true;
+    const refreshInterval = Number(
+      process.env.NEXT_PUBLIC_DASHBOARD_REFRESH_INTERVAL_MS || 300000
+    );
 
     const loadDashboard = async () => {
       try {
@@ -85,6 +84,7 @@ const [originalToursData, setOriginalToursData] = useState([]);
         const res = await api.get("/dashboard/");
         const data = res.data;
 
+        if (!mounted) return;
         setDashboardSummary(data.summary || {});
         setPerformanceData(data.performance || []);
         setPieData(data.pass_fail || []);
@@ -99,6 +99,14 @@ const [originalToursData, setOriginalToursData] = useState([]);
     };
 
     loadDashboard();
+    const refreshTimer = Number.isFinite(refreshInterval) && refreshInterval > 0
+      ? setInterval(loadDashboard, refreshInterval)
+      : null;
+
+    return () => {
+      mounted = false;
+      if (refreshTimer) clearInterval(refreshTimer);
+    };
   }, []);
   // ================= TAB HANDLER =================
   const handleTabChange = async (tab) => {
@@ -426,6 +434,7 @@ useEffect(() => {
   language={language}
   setLanguage={setLanguage}
   onOpenAI={() => setOpenAI(true)}
+  onOpenNotifications={() => handleTabChange("notifications")}
   sidebarOpen={sidebarOpen}
   setSidebarOpen={setSidebarOpen}
 />

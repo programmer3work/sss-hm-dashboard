@@ -20,7 +20,7 @@ def get_functions(db: Session = Depends(get_db)):
             status
         FROM sss_function_master
         WHERE record_status = 'Active'
-        ORDER BY function_id DESC;
+        ORDER BY function_date DESC NULLS LAST, function_name ASC, function_id DESC;
     """
 
     try:

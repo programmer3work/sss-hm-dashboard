@@ -37,6 +37,18 @@ export default function ProgressSection({ progressData = [] }) {
       `${item.class_name} - Section ${item.section_name}` === urlClass
   );
 
+  const classSummaries = classTabs.map((className) => {
+    const records = progressData.filter(
+      (item) => `${item.class_name} - Section ${item.section_name}` === className
+    );
+    const students = new Set(records.map((item) => item.student_id || item.full_name));
+    const average = records.length
+      ? records.reduce((sum, item) => sum + Number(item.percentage || 0), 0) / records.length
+      : 0;
+
+    return { className, students: students.size, average: average.toFixed(2) };
+  });
+
   // -------- STUDENTS ----------
   const students = [
     ...new Map(
@@ -137,8 +149,9 @@ export default function ProgressSection({ progressData = [] }) {
 
       {/* -------- CLASS GRID -------- */}
       {!urlClass && (
-        <div className="progress-class-grid">
-          {classTabs.map((className) => (
+        <>
+          <div className="progress-class-grid">
+            {classTabs.map((className) => (
             <button
               key={className}
               className="progress-class-card"
@@ -146,8 +159,25 @@ export default function ProgressSection({ progressData = [] }) {
             >
               {className}
             </button>
-          ))}
-        </div>
+            ))}
+          </div>
+          <div className="table-scroll-wrapper">
+            <table>
+              <thead>
+                <tr><th>Class</th><th>Students</th><th>Average Progress</th></tr>
+              </thead>
+              <tbody>
+                {classSummaries.map((summary) => (
+                  <tr key={summary.className}>
+                    <td>{summary.className}</td>
+                    <td>{summary.students}</td>
+                    <td>{summary.average}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* -------- STUDENT LIST -------- */}

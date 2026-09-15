@@ -39,8 +39,9 @@ def get_class_teachers(db: Session = Depends(get_db)):
         LEFT JOIN sss_teacher_master t
             ON c.class_teacher_id = t.teacher_id
 
-        WHERE c.record_status = 'Active'
-        ORDER BY c.class_id;
+                WHERE c.record_status = 'Active'
+                    AND c.class_teacher_id IS NOT NULL
+                ORDER BY c.class_name, c.section_name, c.class_id;
     """
 
     result = db.execute(text(query)).mappings().all()

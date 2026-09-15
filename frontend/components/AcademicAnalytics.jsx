@@ -48,6 +48,7 @@ export default function AcademicAnalytics({
             placeholder="Enter student name"
             value={student}
             onChange={(e) => setStudent(e.target.value)}
+            required
           />
         </div>
 

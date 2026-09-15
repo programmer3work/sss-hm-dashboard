@@ -25,7 +25,7 @@ export default function ToursSection({ toursData }) {
               <td>{tour.tour_date}</td>
               <td>{tour.students_count}</td>
               <td>{tour.incharge_name}</td>
-              <td>{tour.status}</td>
+              <td>{tour.status || "-"}</td>
             </tr>
           ))}
         </tbody>

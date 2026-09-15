@@ -135,7 +135,7 @@ export async function translateActiveTab({
 
       data = await bulkTranslate(
         data,
-        "destination",
+        "location_name",
         language
       );
 
@@ -151,7 +151,7 @@ export async function translateActiveTab({
 
       const data = await bulkTranslate(
         originalClassTeachers,
-        "teacher_name",
+        "class_teacher_name",
         language
       );
 

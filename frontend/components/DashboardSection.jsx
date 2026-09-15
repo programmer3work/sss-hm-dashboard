@@ -1,4 +1,5 @@
 import { Users, GraduationCap, TrendingUp, BookOpen } from "lucide-react";
+import { useState } from "react";
 
 import {
   ResponsiveContainer,
@@ -7,6 +8,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
   PieChart,
   Pie,
   Cell,
@@ -19,6 +21,14 @@ export default function DashboardSection({
   performanceData = [],
   pieData = [],
 }) {
+  const [selectedSlice, setSelectedSlice] = useState(null);
+  const total = pieData.reduce((sum, item) => sum + Number(item.value || 0), 0);
+
+  const formatSlice = (value) => ({
+    value,
+    percentage: total ? ((Number(value) / total) * 100).toFixed(1) : "0.0",
+  });
+
   return (
     <>
       <div className="analytics-grid">
@@ -74,13 +84,32 @@ export default function DashboardSection({
 
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={pieData} dataKey="value" outerRadius={90} label>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                outerRadius={90}
+                label={({ name, value }) => `${name}: ${formatSlice(value).percentage}%`}
+                onClick={(entry) => setSelectedSlice(entry)}
+              >
                 {pieData.map((entry, index) => (
                   <Cell key={`pie-${entry.name || index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
+              <Tooltip
+                formatter={(value, name) => {
+                  const details = formatSlice(value);
+                  return [`${details.value} (${details.percentage}%)`, name];
+                }}
+              />
+              <Legend />
             </PieChart>
           </ResponsiveContainer>
+          <p className="chart-detail" aria-live="polite">
+            {selectedSlice
+              ? `${selectedSlice.name}: ${selectedSlice.value} (${formatSlice(selectedSlice.value).percentage}%)`
+              : "Select a segment to view its details."}
+          </p>
         </div>
       </div>
     </>
