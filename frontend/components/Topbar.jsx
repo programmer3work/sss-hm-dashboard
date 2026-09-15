@@ -220,7 +220,7 @@ const handleVoiceInput = () => {
 {/* SWAIS Brand */}
 <div className="brand">
   <div className="brand-logo">
-    <img
+    <Image
       src="/swais-logo.jpeg"
       alt="SWAIS Logo"
       width="50"
