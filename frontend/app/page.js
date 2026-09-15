@@ -524,7 +524,7 @@ useEffect(() => {
 {activeTab === "classTeachers" && (
   <ClassTeachersSection
     classTeachers={searchItems(classTeachers, [
-      "teacher_name",
+      "class_teacher_name",
       "class_name",
     ])}
   />

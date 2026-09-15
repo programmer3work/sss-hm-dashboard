@@ -14,6 +14,7 @@ import {
   Menu,
 } from "lucide-react";
 import useVoice from "../hooks/useVoice";
+import { getSupportedLanguages } from "@/config/languages";
 import Image from "next/image";
 export default function Topbar({
   headmaster,
@@ -35,11 +36,9 @@ export default function Topbar({
   const [showLangMenu, setShowLangMenu] = useState(false);
 
   const langRef = useRef(null);
-const languages = [
-  { label: "English", value: "English" },
-  { label: "తెలుగు", value: "Telugu" },
-  { label: "हिन्दी", value: "Hindi" },
-];
+  const languages = getSupportedLanguages();
+  const selectedLanguageLabel =
+    languages.find((lang) => lang.value === language)?.label || language || "English";
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -167,9 +166,7 @@ const handleVoiceInput = () => {
           >
             <Languages size={18} />
 
-           <span>
-  {languages.find((lang) => lang.value === language)?.label || language}
-</span>
+           <span>{selectedLanguageLabel}</span>
 
             <ChevronDown
               size={16}

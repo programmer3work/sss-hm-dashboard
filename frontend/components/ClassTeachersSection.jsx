@@ -19,7 +19,7 @@ export default function ClassTeachersSection({ classTeachers }) {
           {classTeachers.map((item, index) => (
             <tr key={index}>
               <td>{item.class_name}</td>
-              <td>{item.class_teacher_name}</td>
+              <td>{item.class_teacher_name || "Not Assigned"}</td>
               <td>{item.section_name}</td>
               <td>{item.academic_year}</td>
             </tr>

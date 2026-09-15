@@ -26,22 +26,15 @@ export default function StudentsSection({
   }, [students]);
 
   const [activeSectionTab, setActiveSectionTab] = useState("");
+  const selectedSectionTab = tabs.includes(activeSectionTab)
+    ? activeSectionTab
+    : tabs[0] || "";
 
   useEffect(() => {
-    if (tabs.length > 0) {
-      setActiveSectionTab((currentTab) => {
-        const nextTab = tabs.includes(currentTab) ? currentTab : tabs[0];
-
-        if (nextTab !== currentTab) {
-          onSectionChange?.(nextTab);
-        }
-
-        return nextTab;
-      });
-    } else {
-      setActiveSectionTab("");
+    if (selectedSectionTab && selectedSectionTab !== activeSectionTab) {
+      onSectionChange?.(selectedSectionTab);
     }
-  }, [tabs, onSectionChange]);
+  }, [activeSectionTab, onSectionChange, selectedSectionTab]);
 
   const filteredStudents = students.filter((student) => {
     const search = searchText.trim().toLowerCase();
@@ -66,7 +59,7 @@ export default function StudentsSection({
 
     return (
       `${student.class_name} - Section ${student.section_name}` ===
-      activeSectionTab
+      selectedSectionTab
     );
   });
 
@@ -86,7 +79,7 @@ export default function StudentsSection({
                 onSectionChange?.(tab);
               }}
               className={
-                activeSectionTab === tab ? "active-student-tab" : ""
+                selectedSectionTab === tab ? "active-student-tab" : ""
               }
             >
               {tab}
