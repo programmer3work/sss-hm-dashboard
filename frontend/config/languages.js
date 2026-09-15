@@ -2,6 +2,8 @@ export const DEFAULT_SUPPORTED_LANGUAGES = [
   { label: "English", value: "English" },
   { label: "తెలుగు", value: "Telugu" },
   { label: "हिन्दी", value: "Hindi" },
+  { label: "தமிழ்", value: "Tamil" },
+  { label: "ಕನ್ನಡ", value: "Kannada" },
 ];
 
 export function getSupportedLanguages() {
@@ -11,24 +13,31 @@ export function getSupportedLanguages() {
     return DEFAULT_SUPPORTED_LANGUAGES;
   }
 
-  return raw
+  const configuredLanguages = raw
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean)
-    .map((value) => {
-      const normalized = value.replace(/[_-]/g, " ").trim();
+    .map((value) => value.replace(/[_-]/g, " ").trim());
 
-      const match = DEFAULT_SUPPORTED_LANGUAGES.find(
-        (lang) => lang.value.toLowerCase() === normalized.toLowerCase()
-      );
+  const configuredValues = new Set(configuredLanguages.map((value) => value.toLowerCase()));
+  const additionalDefaults = DEFAULT_SUPPORTED_LANGUAGES
+    .map((lang) => lang.value)
+    .filter((value) => !configuredValues.has(value.toLowerCase()));
 
-      if (match) {
-        return match;
-      }
+  return [...configuredLanguages, ...additionalDefaults].map((value) => {
+    const normalized = value.trim();
 
-      return {
-        label: normalized,
-        value: normalized,
-      };
-    });
+    const match = DEFAULT_SUPPORTED_LANGUAGES.find(
+      (lang) => lang.value.toLowerCase() === normalized.toLowerCase()
+    );
+
+    if (match) {
+      return match;
+    }
+
+    return {
+      label: normalized,
+      value: normalized,
+    };
+  });
 }
