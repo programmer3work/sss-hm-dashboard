@@ -1,10 +1,26 @@
 export const DEFAULT_SUPPORTED_LANGUAGES = [
-  { label: "English", value: "English" },
-  { label: "తెలుగు", value: "Telugu" },
-  { label: "हिन्दी", value: "Hindi" },
-  { label: "தமிழ்", value: "Tamil" },
-  { label: "ಕನ್ನಡ", value: "Kannada" },
+  { label: "English", value: "English", ttsCode: "en" },
+  { label: "తెలుగు", value: "Telugu", ttsCode: "te" },
+  { label: "हिन्दी", value: "Hindi", ttsCode: "hi" },
+  { label: "தமிழ்", value: "Tamil", ttsCode: "ta" },
+  { label: "ಕನ್ನಡ", value: "Kannada", ttsCode: "kn" },
 ];
+
+export function getTtsLanguageCode(language) {
+  const configuredCodes = process.env.NEXT_PUBLIC_TTS_LANGUAGE_CODES;
+  const configuredCode = configuredCodes
+    ?.split(",")
+    .map((entry) => entry.trim().split(":"))
+    .find(([name]) => name?.toLowerCase() === language?.toLowerCase())?.[1];
+
+  if (configuredCode) {
+    return configuredCode.trim();
+  }
+
+  return DEFAULT_SUPPORTED_LANGUAGES.find(
+    (entry) => entry.value.toLowerCase() === language?.toLowerCase()
+  )?.ttsCode || language;
+}
 
 export function getSupportedLanguages() {
   const raw = process.env.NEXT_PUBLIC_SUPPORTED_LANGUAGES;
@@ -38,6 +54,7 @@ export function getSupportedLanguages() {
     return {
       label: normalized,
       value: normalized,
+      ttsCode: getTtsLanguageCode(normalized),
     };
   });
 }

@@ -4,6 +4,7 @@ import "./AIToolsModal.css";
 import AcademicAnalytics from "./AcademicAnalytics";
 import ReportPanel from "./ReportPanel";
 import TextToVoiceButton from "./TextToVoiceButton";
+import { getSupportedLanguages } from "@/config/languages";
 
 import { useState } from "react";
 import axios from "axios";
@@ -83,6 +84,7 @@ export default function AIToolsModal({
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [audioTranslation, setAudioTranslation] = useState("");
+  const supportedLanguages = getSupportedLanguages();
 
   // ==========================================
   // SAFE CONDITIONAL RETURN
@@ -797,29 +799,16 @@ if (selectedReport === "student") {
                   translateContent(lang);
                 }}
               >
-                <option value="English">
-                  English
-                </option>
-
-                <option value="Telugu">
-                  Telugu
-                </option>
-
-                <option value="Hindi">
-                  Hindi
-                </option>
-
-                <option value="Tamil">
-                  Tamil
-                </option>
-
-                <option value="Kannada">
-                  Kannada
-                </option>
+                {supportedLanguages.map((lang) => (
+                  <option key={lang.value} value={lang.value}>
+                    {lang.label}
+                  </option>
+                ))}
               </select>
                 <TextToVoiceButton
     text={textToSpeak}
     language={language}
+    languageCode={supportedLanguages.find((lang) => lang.value === language)?.ttsCode}
     userEmail={headmaster?.email || ""}
   />
 

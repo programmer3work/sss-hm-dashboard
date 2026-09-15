@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { getTtsLanguageCode } from "@/config/languages";
 
 const aiApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_AI_API_BASE_URL,
@@ -10,6 +11,7 @@ const aiApi = axios.create({
 export default function TextToVoiceButton({
   text,
   language = "English",
+  languageCode,
   userEmail = "",
 }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -45,7 +47,8 @@ export default function TextToVoiceButton({
 
       const payload = {
         text,
-        language,
+        language: languageCode || getTtsLanguageCode(language),
+        language_name: language,
         user_email: userEmail,
         client_name: "SSS",
       };
