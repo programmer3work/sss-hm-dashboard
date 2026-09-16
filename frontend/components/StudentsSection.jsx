@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function StudentsSection({
   students = [],
@@ -27,6 +27,7 @@ export default function StudentsSection({
   }, [allStudents]);
 
   const [activeSectionTab, setActiveSectionTab] = useState("");
+  const requestedSectionRef = useRef("");
   const selectedSectionTab = tabs.includes(activeSectionTab)
     ? activeSectionTab
     : tabs[0] || "";
@@ -43,7 +44,11 @@ export default function StudentsSection({
   };
 
   useEffect(() => {
-    if (selectedSectionTab && selectedSectionTab !== activeSectionTab) {
+    if (
+      selectedSectionTab &&
+      selectedSectionTab !== requestedSectionRef.current
+    ) {
+      requestedSectionRef.current = selectedSectionTab;
       const payload = getSectionSelection(selectedSectionTab);
       console.log("Section change payload:", payload);
       onSectionChange?.(payload);
@@ -90,6 +95,7 @@ export default function StudentsSection({
               key={tab}
               onClick={() => {
                 setActiveSectionTab(tab);
+                requestedSectionRef.current = tab;
                 const payload = getSectionSelection(tab);
                 console.log("Section change payload:", payload);
                 onSectionChange?.(payload);
