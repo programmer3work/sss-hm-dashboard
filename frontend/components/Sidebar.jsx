@@ -72,7 +72,7 @@ if (window.innerWidth <= 900) {
         <div className="brand-box">
   <div className="logo-circle">
     <Image
-      src="/school-logo.jpeg"
+      src="/headmaster/school-logo.jpeg"
       alt="SSS Logo"
       width={80}
       height={80}
