@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 export default function StudentsSection({
   students = [],
+  allStudents = [],
   searchText = "",
   loaded = false,
   onSectionChange,
@@ -11,7 +12,7 @@ export default function StudentsSection({
   const tabs = useMemo(() => {
     return [
       ...new Set(
-        students
+        allStudents
           .filter(
             (student) =>
               student.class_name != null &&
@@ -23,7 +24,7 @@ export default function StudentsSection({
           )
       ),
     ];
-  }, [students]);
+  }, [allStudents]);
 
   const [activeSectionTab, setActiveSectionTab] = useState("");
   const selectedSectionTab = tabs.includes(activeSectionTab)
@@ -76,7 +77,13 @@ export default function StudentsSection({
               key={tab}
               onClick={() => {
                 setActiveSectionTab(tab);
-                onSectionChange?.(tab);
+                const separator = " - Section ";
+                const separatorIndex = tab.indexOf(separator);
+                onSectionChange?.({
+                  label: tab,
+                  className: tab.slice(0, separatorIndex),
+                  section: tab.slice(separatorIndex + separator.length),
+                });
               }}
               className={
                 selectedSectionTab === tab ? "active-student-tab" : ""

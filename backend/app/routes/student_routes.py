@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -10,7 +10,11 @@ router = APIRouter()
 
 # ===================== STUDENTS =====================
 @router.get("/")
-def get_students(db: Session = Depends(get_db)):
+def get_students(
+    class_name: str | None = Query(default=None),
+    section: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
     query = """
         SELECT
             s.student_id,
@@ -37,16 +41,33 @@ def get_students(db: Session = Depends(get_db)):
         FROM sss_student_master s
         LEFT JOIN sss_class_master c
             ON s.class_id = c.class_id
-        LEFT JOIN sss_parent_student_map spm
-            ON s.student_id = spm.student_id
+        LEFT JOIN LATERAL (
+            SELECT spm.parent_id
+            FROM sss_parent_student_map spm
+            WHERE spm.student_id = s.student_id
+            ORDER BY spm.parent_id
+            LIMIT 1
+        ) spm
+            ON TRUE
         LEFT JOIN sss_parent_master p
             ON spm.parent_id = p.parent_id
         WHERE s.record_status = 'Active'
+          AND (
+              :class_name IS NULL
+              OR COALESCE(c.class_name, NULLIF(BTRIM(s.class_name), '')) = :class_name
+          )
+          AND (
+              :section IS NULL
+              OR COALESCE(c.section_name, NULLIF(BTRIM(s.section), '')) = :section
+          )
         ORDER BY s.student_id;
     """
 
     try:
-        result = db.execute(text(query)).mappings().all()
+        result = db.execute(
+            text(query),
+            {"class_name": class_name, "section": section},
+        ).mappings().all()
         return [dict(row) for row in result]
 
     except SQLAlchemyError as exc:

@@ -247,9 +247,22 @@ setClassTeachers(data);
 
   // ================= TRANSLATE FUNCTION =================
 
-const handleSectionChange = (section) => {
-  setActiveSection(section);
-};  
+const handleSectionChange = async ({ label, className, section }) => {
+  setActiveSection(label);
+
+  try {
+    setLoading(true);
+    const res = await api.get("/students/", {
+      params: { class_name: className, section },
+    });
+    setStudents(res.data || []);
+  } catch (error) {
+    console.error("Student section API Error:", error);
+    setStudents([]);
+  } finally {
+    setLoading(false);
+  }
+};
 const bulkTranslate = async (items, field, lang) => {
 
   if (!items || items.length === 0) {
@@ -320,7 +333,15 @@ useEffect(() => {
   const translateStudents = async () => {
 
     if (language === "English") {
-      setStudents(originalStudents);
+      setStudents(
+        activeSection
+          ? originalStudents.filter(
+              (student) =>
+                `${student.class_name} - Section ${student.section_name}` ===
+                activeSection
+            )
+          : originalStudents
+      );
       return;
     }
 
@@ -350,18 +371,7 @@ console.log("Students in section:", sectionStudents.length);
         language
       );
 
-      // Merge translated section back into full student list
-      const updatedStudents = originalStudents.map((student) => {
-
-        const translated = translatedSection.find(
-          (s) => s.student_id === student.student_id
-        );
-
-        return translated || student;
-
-      });
-
-      setStudents(updatedStudents);
+      setStudents(translatedSection);
 
     } catch (error) {
 
@@ -462,6 +472,7 @@ useEffect(() => {
     {activeTab === "students" && (
   <StudentsSection
     students={students}
+    allStudents={originalStudents}
     searchText={searchText}
     loaded={loaded.students}
     onSectionChange={handleSectionChange}
