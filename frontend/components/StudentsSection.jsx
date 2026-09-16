@@ -44,7 +44,9 @@ export default function StudentsSection({
 
   useEffect(() => {
     if (selectedSectionTab && selectedSectionTab !== activeSectionTab) {
-      onSectionChange?.(getSectionSelection(selectedSectionTab));
+      const payload = getSectionSelection(selectedSectionTab);
+      console.log("Section change payload:", payload);
+      onSectionChange?.(payload);
     }
   }, [activeSectionTab, onSectionChange, selectedSectionTab]);
 
@@ -88,7 +90,9 @@ export default function StudentsSection({
               key={tab}
               onClick={() => {
                 setActiveSectionTab(tab);
-                onSectionChange?.(getSectionSelection(tab));
+                const payload = getSectionSelection(tab);
+                console.log("Section change payload:", payload);
+                onSectionChange?.(payload);
               }}
               className={
                 selectedSectionTab === tab ? "active-student-tab" : ""

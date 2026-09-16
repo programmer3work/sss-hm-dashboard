@@ -26,6 +26,9 @@ const api = axios.create({
   timeout: 30000, // production safety
 });
 
+console.log("Frontend API base URL:", api.defaults.baseURL);
+console.log("Frontend environment:", process.env.NODE_ENV);
+
 // ================= MAIN PAGE =================
 export default function HomePage() {
   useAuthGuard();
@@ -253,10 +256,14 @@ setClassTeachers(data);
 const handleSectionChange = async ({ label, className, section }) => {
   setActiveSection(label);
 
+  const params = { class_name: className, section };
+  console.log("Section change payload:", { label, className, section });
+  console.log("API request params:", params);
+
   try {
     setLoading(true);
     const res = await api.get("/students/", {
-      params: { class_name: className, section },
+      params,
     });
     setStudents(res.data || []);
   } catch (error) {

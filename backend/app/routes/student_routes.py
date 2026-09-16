@@ -15,6 +15,7 @@ def get_students(
     section: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
+    print("Received student params:", {"class_name": class_name, "section": section})
     query = """
         SELECT
             s.student_id,
