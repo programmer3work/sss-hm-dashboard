@@ -3,3 +3,4 @@ uvicorn[standard]==0.34.0
 psycopg[binary]==3.3.4
 psycopg2-binary==2.9.10
 SQLAlchemy==2.0.36
+Faker==37.1.0

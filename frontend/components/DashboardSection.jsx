@@ -14,7 +14,10 @@ import {
   Cell,
 } from "recharts";
 
-const COLORS = ["#2563EB", "#22C55E", "#F59E0B", "#EF4444"];
+const SLICE_COLORS = {
+  Pass: "#2563EB",
+  Fail: "#DC2626",
+};
 
 export default function DashboardSection({
   dashboardSummary = {},
@@ -93,7 +96,10 @@ export default function DashboardSection({
                 onClick={(entry) => setSelectedSlice(entry)}
               >
                 {pieData.map((entry, index) => (
-                  <Cell key={`pie-${entry.name || index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`pie-${entry.name || index}`}
+                    fill={SLICE_COLORS[entry.name] || "#64748B"}
+                  />
                 ))}
               </Pie>
               <Tooltip
