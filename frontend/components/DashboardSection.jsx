@@ -14,9 +14,16 @@ import {
   Cell,
 } from "recharts";
 
-const SLICE_COLORS = {
-  Pass: "#16A34A",
-  Fail: "#DC2626",
+const PASS_COLOR = "#16A34A";
+const FAIL_COLOR = "#DC2626";
+
+const getSliceColor = (name) => {
+  const category = String(name || "").trim().toLowerCase();
+
+  if (category === "pass") return PASS_COLOR;
+  if (category === "fail") return FAIL_COLOR;
+
+  return "#64748B";
 };
 
 export default function DashboardSection({
@@ -98,7 +105,7 @@ export default function DashboardSection({
                 {pieData.map((entry, index) => (
                   <Cell
                     key={`pie-${entry.name || index}`}
-                    fill={SLICE_COLORS[entry.name] || "#64748B"}
+                    fill={getSliceColor(entry.name)}
                   />
                 ))}
               </Pie>
