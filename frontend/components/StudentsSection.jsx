@@ -112,6 +112,7 @@ export default function StudentsSection({
               <th>Name</th>
               <th>Class</th>
               <th>Section</th>
+              <th>Roll No</th>
               <th>Parent</th>
               <th>Mobile</th>
               <th>Email</th>
@@ -121,15 +122,16 @@ export default function StudentsSection({
           <tbody>
             {!loaded ? null : filteredStudents.length === 0 ? (
               <tr>
-                <td colSpan={7}>No students found</td>
+                <td colSpan={8}>No students found</td>
               </tr>
             ) : (
-              filteredStudents.map((student) => (
-                <tr key={student.student_id}>
+              filteredStudents.map((student, index) => (
+                <tr key={`${student.student_id}-${index}`}>
                   <td>{student.admission_no || "-"}</td>
                   <td>{student.name || "-"}</td>
                   <td>{student.class_name || "-"}</td>
                   <td>{student.section_name || "-"}</td>
+                  <td>{student.roll_number || "-"}</td>
                   <td>{student.parent_name || "-"}</td>
                   <td>{student.mobile_no || "-"}</td>
                   <td>{student.email_id || "-"}</td>
