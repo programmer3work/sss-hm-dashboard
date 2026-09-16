@@ -586,14 +586,57 @@ const translateContent = async (selectedLanguage) => {
 
 let textToSpeak = "";
 
+const compactTextForTts = (value) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const cleaned = value
+    .replace(/\r/g, "\n")
+    .replace(/\s+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleaned) {
+    return "";
+  }
+
+  const sentences = cleaned
+    .split(/(?<=[.!?])\s+|\n\n+/)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  if (sentences.length === 0) {
+    return cleaned;
+  }
+
+  const maxLength = 1800;
+  const selected = [];
+  let totalLength = 0;
+
+  for (const sentence of sentences) {
+    const nextLength = totalLength + sentence.length + 1;
+
+    if (nextLength > maxLength && selected.length > 0) {
+      break;
+    }
+
+    selected.push(sentence);
+    totalLength = nextLength;
+  }
+
+  return selected.join(" ").trim();
+};
+
 // Teacher Assessment
 if (selectedReport === "teacher") {
-  textToSpeak = report || "";
+  textToSpeak = compactTextForTts(report || "");
 }
 
 // Class Assessment
 if (selectedReport === "class") {
-  textToSpeak = [
+  textToSpeak = compactTextForTts([
     analyticsData?.macro_summary,
 
     ...(analyticsData?.top_performing_areas || []),
@@ -603,12 +646,12 @@ if (selectedReport === "class") {
     ...(analyticsData?.teacher_recommendations || []),
   ]
     .filter(Boolean)
-    .join(". ");
+    .join(". "));
 }
 
 // Student Assessment
 if (selectedReport === "student") {
-  textToSpeak = [
+  textToSpeak = compactTextForTts([
     analyticsData?.executive_summary,
 
     ...(analyticsData?.strengths || []),
@@ -618,7 +661,7 @@ if (selectedReport === "student") {
     ...(analyticsData?.recommended_actions || []),
   ]
     .filter(Boolean)
-    .join(". ");
+    .join(". ")); 
 }
 
   // ==========================================

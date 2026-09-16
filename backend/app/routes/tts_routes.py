@@ -28,7 +28,9 @@ def text_to_voice(payload: TextToVoiceRequest):
         raise HTTPException(status_code=503, detail="TTS service is not configured.")
 
     request_body = payload.model_dump(exclude_none=True)
-    request_body["language"] = payload.language.lower()
+    request_body["language"] = (payload.language or "").strip()
+    logger.info("TTS request payload: %s", request_body)
+
     headers = {"Content-Type": "application/json", "Accept": "application/json, audio/mpeg"}
     if AI_TTS_API_KEY:
         headers["Authorization"] = f"Bearer {AI_TTS_API_KEY}"
@@ -45,6 +47,12 @@ def text_to_voice(payload: TextToVoiceRequest):
             content_type = upstream.headers.get_content_type()
             body = upstream.read()
             response_headers = {"Cache-Control": "no-store"}
+            logger.info(
+                "TTS upstream response: status=%s content_type=%s body=%s",
+                upstream.status,
+                content_type,
+                body[:2000],
+            )
 
             if content_type.startswith("audio/"):
                 return Response(content=body, media_type=content_type, headers=response_headers)

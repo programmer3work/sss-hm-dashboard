@@ -1,9 +1,9 @@
 export const DEFAULT_SUPPORTED_LANGUAGES = [
-  { label: "English", value: "English", ttsCode: "en" },
-  { label: "తెలుగు", value: "Telugu", ttsCode: "te" },
-  { label: "हिन्दी", value: "Hindi", ttsCode: "hi" },
-  { label: "தமிழ்", value: "Tamil", ttsCode: "ta" },
-  { label: "ಕನ್ನಡ", value: "Kannada", ttsCode: "kn" },
+  { label: "English", value: "English", ttsCode: "en-US" },
+  { label: "తెలుగు", value: "Telugu", ttsCode: "te-IN" },
+  { label: "हिन्दी", value: "Hindi", ttsCode: "hi-IN" },
+  { label: "தமிழ்", value: "Tamil", ttsCode: "ta-IN" },
+  { label: "ಕನ್ನಡ", value: "Kannada", ttsCode: "kn-IN" },
 ];
 
 export function getTtsLanguageCode(language) {
