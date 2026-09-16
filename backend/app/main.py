@@ -9,6 +9,7 @@ from .routes import (
     class_teachers,
     function_routes,
     tours_routes,
+    tts_routes,
 )
 
 app = FastAPI(title="School Management API")
@@ -28,6 +29,7 @@ app.include_router(class_teachers.router, prefix="/class-teachers", tags=["Class
 app.include_router(notification_routes.router, prefix="/notifications", tags=["Notifications"])
 app.include_router(function_routes.router, prefix="/functions", tags=["Functions"])
 app.include_router(tours_routes.router, prefix="/tours", tags=["Tours"])
+app.include_router(tts_routes.router, prefix="/tts", tags=["Text to speech"])
 
 @app.get("/")
 def home():

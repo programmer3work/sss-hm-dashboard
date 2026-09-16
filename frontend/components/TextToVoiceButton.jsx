@@ -5,7 +5,9 @@ import axios from "axios";
 import { getTtsLanguageCode } from "@/config/languages";
 
 const aiApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_AI_API_BASE_URL,
+  baseURL:
+    process.env.NEXT_PUBLIC_TTS_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_AI_API_BASE_URL,
 });
 
 export default function TextToVoiceButton({
@@ -31,6 +33,8 @@ export default function TextToVoiceButton({
   useEffect(() => () => stopAudio(), []);
 
   const handleTextToVoice = async () => {
+    let payload;
+
     try {
       // Stop currently playing audio
       if (isSpeaking && audioRef.current) {
@@ -45,7 +49,7 @@ export default function TextToVoiceButton({
 
       setLoading(true);
 
-      const payload = {
+      payload = {
         text,
         language: languageCode || getTtsLanguageCode(language),
         language_name: language,
@@ -56,8 +60,9 @@ export default function TextToVoiceButton({
       console.log("Text To Voice Request:", payload);
 
       const res = await aiApi.post(
-        "/api/hm/text-to-voice",
-        payload
+        process.env.NEXT_PUBLIC_TTS_API_PATH || "/api/hm/text-to-voice",
+        payload,
+        { responseType: "arraybuffer" }
       );
 
       console.log(
@@ -65,18 +70,26 @@ export default function TextToVoiceButton({
         res.data
       );
 
-      const audioBase64 =
-        res.data?.audio_base64;
+      const contentType = res.headers["content-type"] || "";
+      let audioUrl;
 
-      if (!audioBase64) {
-        throw new Error(
-          "audio_base64 not found in response"
+      if (contentType.startsWith("audio/")) {
+        audioUrl = URL.createObjectURL(
+          new Blob([res.data], { type: contentType })
         );
+      } else {
+        const responseText = new TextDecoder().decode(res.data);
+        const responseData = JSON.parse(responseText);
+        const audioBase64 = responseData?.audio_base64;
+
+        if (!audioBase64) {
+          throw new Error("audio_base64 not found in response");
+        }
+
+        audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
       }
 
-      const audio = new Audio(
-        `data:audio/mpeg;base64,${audioBase64}`
-      );
+      const audio = new Audio(audioUrl);
 
       audioRef.current = audio;
 
@@ -87,6 +100,7 @@ export default function TextToVoiceButton({
       audio.onended = () => {
         setIsSpeaking(false);
         audioRef.current = null;
+        if (audioUrl.startsWith("blob:")) URL.revokeObjectURL(audioUrl);
       };
 
       audio.onerror = (error) => {
@@ -97,14 +111,21 @@ export default function TextToVoiceButton({
 
         setIsSpeaking(false);
         audioRef.current = null;
+        if (audioUrl.startsWith("blob:")) URL.revokeObjectURL(audioUrl);
       };
 
       await audio.play();
     } catch (error) {
-      console.error(
-        "Text To Voice Error:",
-        error?.response?.data || error
-      );
+      let providerError = error?.response?.data;
+      if (providerError instanceof ArrayBuffer) {
+        providerError = new TextDecoder().decode(providerError);
+      }
+      console.error("Text To Voice Error:", {
+        status: error?.response?.status,
+        payload,
+        providerError,
+        error,
+      });
 
       alert("Text to voice failed.");
 
