@@ -15,7 +15,7 @@ import {
 } from "recharts";
 
 const SLICE_COLORS = {
-  Pass: "#2563EB",
+  Pass: "#16A34A",
   Fail: "#DC2626",
 };
 
