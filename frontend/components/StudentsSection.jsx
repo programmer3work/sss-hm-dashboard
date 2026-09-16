@@ -31,9 +31,20 @@ export default function StudentsSection({
     ? activeSectionTab
     : tabs[0] || "";
 
+  const getSectionSelection = (label) => {
+    const separator = " - Section ";
+    const separatorIndex = label.indexOf(separator);
+
+    return {
+      label,
+      className: label.slice(0, separatorIndex),
+      section: label.slice(separatorIndex + separator.length),
+    };
+  };
+
   useEffect(() => {
     if (selectedSectionTab && selectedSectionTab !== activeSectionTab) {
-      onSectionChange?.(selectedSectionTab);
+      onSectionChange?.(getSectionSelection(selectedSectionTab));
     }
   }, [activeSectionTab, onSectionChange, selectedSectionTab]);
 
@@ -77,13 +88,7 @@ export default function StudentsSection({
               key={tab}
               onClick={() => {
                 setActiveSectionTab(tab);
-                const separator = " - Section ";
-                const separatorIndex = tab.indexOf(separator);
-                onSectionChange?.({
-                  label: tab,
-                  className: tab.slice(0, separatorIndex),
-                  section: tab.slice(separatorIndex + separator.length),
-                });
+                onSectionChange?.(getSectionSelection(tab));
               }}
               className={
                 selectedSectionTab === tab ? "active-student-tab" : ""

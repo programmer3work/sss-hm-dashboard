@@ -43,7 +43,10 @@ const hasFullName = (value) => value.trim().split(/\s+/).filter(Boolean).length 
 // ==========================================
 
 const aiApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_AI_API_BASE_URL,
+  baseURL:
+    process.env.NODE_ENV === "production"
+      ? process.env.NEXT_PUBLIC_PRODUCTION_AI_API_BASE_URL
+      : process.env.NEXT_PUBLIC_AI_API_BASE_URL,
 });
 
 export default function AIToolsModal({

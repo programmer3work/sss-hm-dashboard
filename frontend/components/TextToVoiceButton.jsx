@@ -6,8 +6,10 @@ import { getTtsLanguageCode } from "@/config/languages";
 
 const aiApi = axios.create({
   baseURL:
-    process.env.NEXT_PUBLIC_TTS_API_BASE_URL ||
-    process.env.NEXT_PUBLIC_AI_API_BASE_URL,
+    process.env.NODE_ENV === "production"
+      ? process.env.NEXT_PUBLIC_PRODUCTION_TTS_API_BASE_URL
+      : process.env.NEXT_PUBLIC_TTS_API_BASE_URL ||
+        process.env.NEXT_PUBLIC_AI_API_BASE_URL,
 });
 
 export default function TextToVoiceButton({

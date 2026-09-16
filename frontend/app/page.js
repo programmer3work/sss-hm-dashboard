@@ -19,7 +19,10 @@ import ClassTeachersSection from "../components/ClassTeachersSection";
 import { translateActiveTab } from "./utils/translateActiveTab";
 // ================= API SETUP =================
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  baseURL:
+    process.env.NODE_ENV === "production"
+      ? process.env.NEXT_PUBLIC_PRODUCTION_API_BASE_URL
+      : process.env.NEXT_PUBLIC_API_BASE_URL,
   timeout: 30000, // production safety
 });
 
