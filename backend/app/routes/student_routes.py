@@ -16,8 +16,8 @@ def get_students(db: Session = Depends(get_db)):
             s.student_id,
             s.admission_no,
             s.name,
-            c.class_name,
-            s.section AS section_name,
+            COALESCE(c.class_name, NULLIF(BTRIM(s.class_name), '')) AS class_name,
+            COALESCE(c.section_name, NULLIF(BTRIM(s.section), '')) AS section_name,
             s.roll_number,
             COALESCE(
                 p.full_name,
