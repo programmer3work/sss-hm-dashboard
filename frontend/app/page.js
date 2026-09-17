@@ -26,6 +26,11 @@ const api = axios.create({
   timeout: 30000, // production safety
 });
 
+const getRefreshInterval = (fallbackMs, envKey) => {
+  const envValue = Number(process.env[envKey] ?? fallbackMs);
+  return Number.isFinite(envValue) && envValue > 0 ? envValue : fallbackMs;
+};
+
 console.log("Frontend API base URL:", api.defaults.baseURL);
 console.log("Frontend environment:", process.env.NODE_ENV);
 
@@ -79,8 +84,9 @@ const [originalToursData, setOriginalToursData] = useState([]);
   // ================= DASHBOARD LOAD =================
   useEffect(() => {
     let mounted = true;
-    const refreshInterval = Number(
-      process.env.NEXT_PUBLIC_DASHBOARD_REFRESH_INTERVAL_MS || 300000
+    const refreshInterval = getRefreshInterval(
+      300000,
+      "NEXT_PUBLIC_DASHBOARD_REFRESH_INTERVAL_MS"
     );
 
     const loadDashboard = async () => {
@@ -100,20 +106,96 @@ const [originalToursData, setOriginalToursData] = useState([]);
       } catch (err) {
         console.error("Dashboard API Error:", err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     loadDashboard();
-    const refreshTimer = Number.isFinite(refreshInterval) && refreshInterval > 0
-      ? setInterval(loadDashboard, refreshInterval)
-      : null;
+    const refreshTimer = setInterval(loadDashboard, refreshInterval);
 
     return () => {
       mounted = false;
-      if (refreshTimer) clearInterval(refreshTimer);
+      clearInterval(refreshTimer);
     };
   }, []);
+
+  const loadTabData = async (tab, shouldShowLoading = true) => {
+    if (!tab) return;
+
+    try {
+      if (shouldShowLoading) setLoading(true);
+
+      if (tab === "students") {
+        const res = await api.get("/students/");
+        const data = res.data || [];
+        setOriginalStudents(data);
+        setStudents(
+          activeSection
+            ? data.filter(
+                (student) =>
+                  `${student.class_name} - Section ${student.section_name}` ===
+                  activeSection
+              )
+            : data
+        );
+        setLoaded((p) => ({ ...p, students: true }));
+      }
+
+      if (tab === "teachers") {
+        const res = await api.get("/teachers/");
+        const data = res.data || [];
+        setOriginalTeachers(data);
+        setTeachers(data);
+        setLoaded((p) => ({ ...p, teachers: true }));
+      }
+
+      if (tab === "progress") {
+        const res = await api.get("/students/progress");
+        const data = res.data || [];
+        setOriginalProgressData(data);
+        setProgressData(data);
+        setLoaded((p) => ({ ...p, progress: true }));
+      }
+
+      if (tab === "notifications") {
+        const res = await api.get("/notifications/");
+        const data = res.data || [];
+        setOriginalNotifications(data);
+        setNotifications(data);
+        await api.put("/notifications/mark-read");
+        setUnreadCount(0);
+        setLoaded((p) => ({ ...p, notifications: true }));
+      }
+
+      if (tab === "functions") {
+        const res = await api.get("/functions/");
+        const data = res.data || [];
+        setOriginalFunctionsData(data);
+        setFunctionsData(data);
+        setLoaded((p) => ({ ...p, functions: true }));
+      }
+
+      if (tab === "tours") {
+        const res = await api.get("/tours/");
+        const data = res.data || [];
+        setOriginalToursData(data);
+        setToursData(data);
+        setLoaded((p) => ({ ...p, tours: true }));
+      }
+
+      if (tab === "classTeachers") {
+        const res = await api.get("/class-teachers/");
+        const data = res.data || [];
+        setOriginalClassTeachers(data);
+        setClassTeachers(data);
+        setLoaded((p) => ({ ...p, classTeachers: true }));
+      }
+    } catch (err) {
+      console.error("Tab API Error:", err);
+    } finally {
+      if (shouldShowLoading) setLoading(false);
+    }
+  };
   // ================= TAB HANDLER =================
   const handleTabChange = async (tab) => {
 
@@ -142,99 +224,51 @@ const [originalToursData, setOriginalToursData] = useState([]);
 
   try {
       setLoading(true);
-
-      // ================= STUDENTS =================
-     if (tab === "students" && !loaded.students) {
-  const res = await api.get("/students/");
-
-  const data = res.data || [];
-
-  setOriginalStudents(data);
-  setStudents(data);
-
-  setLoaded((p) => ({ ...p, students: true }));
-}
-
-      // ================= TEACHERS =================
-     if (tab === "teachers" && !loaded.teachers) {
-
-  const res = await api.get("/teachers/");
-
-  const data = res.data || [];
-
-  setOriginalTeachers(data);
-  setTeachers(data);
-
-  setLoaded((p) => ({ ...p, teachers: true }));
-}
-
-      // ================= PROGRESS =================
-      if (tab === "progress" && !loaded.progress) {
-        const res = await api.get("/students/progress");
-
-const data = res.data || [];
-
-setOriginalProgressData(data);
-setProgressData(data);
-        setLoaded((p) => ({ ...p, progress: true }));
-      }
-
-      // ================= NOTIFICATIONS =================
-     if (tab === "notifications" && !loaded.notifications) {
-  // Fetch notifications
-  const res = await api.get("/notifications/");
-  console.log("Notification API:", res.data);
-const data = res.data || [];
-
-setOriginalNotifications(data);
-setNotifications(data);
-  
-
-  // Mark all notifications as read
-  await api.put("/notifications/mark-read");
-
-  // Remove the badge immediately
-  setUnreadCount(0);
-
-  setLoaded((p) => ({ ...p, notifications: true }));
-}
-
-      // ================= FUNCTIONS =================
-      if (tab === "functions" && !loaded.functions) {
-        const res = await api.get("/functions/");
-    const data = res.data || [];
-
-setOriginalFunctionsData(data);
-setFunctionsData(data);
-        setLoaded((p) => ({ ...p, functions: true }));
-      }
-
-      // ================= TOURS =================
-      if (tab === "tours" && !loaded.tours) {
-        const res = await api.get("/tours/");
-       const data = res.data || [];
-
-setOriginalToursData(data);
-setToursData(data);
-        setLoaded((p) => ({ ...p, tours: true }));
-      }
-
-      // ================= CLASS TEACHERS =================
-      if (tab === "classTeachers" && !loaded.classTeachers) {
-        const res = await api.get("/class-teachers/");
-       const data = res.data || [];
-
-setOriginalClassTeachers(data);
-setClassTeachers(data);
-        setLoaded((p) => ({ ...p, classTeachers: true }));
-      }
-
+      await loadTabData(tab, false);
     } catch (err) {
       console.error("Tab API Error:", err);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!activeTab) return;
+
+    const refreshInterval = getRefreshInterval(
+      60000,
+      "NEXT_PUBLIC_ACTIVE_TAB_REFRESH_INTERVAL_MS"
+    );
+
+    let isMounted = true;
+
+    const refreshActiveTab = async () => {
+      try {
+        if (!isMounted) return;
+        await loadTabData(activeTab, false);
+      } catch (err) {
+        console.error("Refresh active tab error:", err);
+      }
+    };
+
+    refreshActiveTab();
+
+    const timer = setInterval(refreshActiveTab, refreshInterval);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshActiveTab();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [activeTab]);
 
   // ================= SEARCH =================
   const searchItems = (items, keys) => {
