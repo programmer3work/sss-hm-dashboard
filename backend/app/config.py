@@ -12,3 +12,7 @@ DB_PORT = os.getenv("DB_PORT")
 AI_TTS_URL = os.getenv("AI_TTS_URL")
 AI_TTS_API_KEY = os.getenv("AI_TTS_API_KEY")
 AI_TTS_TIMEOUT_SECONDS = float(os.getenv("AI_TTS_TIMEOUT_SECONDS", "30"))
+
+AI_TRANSLATE_URL = os.getenv("AI_TRANSLATE_URL") or os.getenv("AI_TTS_URL")
+AI_TRANSLATE_API_KEY = os.getenv("AI_TRANSLATE_API_KEY") or os.getenv("AI_TTS_API_KEY")
+AI_TRANSLATE_TIMEOUT_SECONDS = float(os.getenv("AI_TRANSLATE_TIMEOUT_SECONDS", os.getenv("AI_TTS_TIMEOUT_SECONDS", "30")))
