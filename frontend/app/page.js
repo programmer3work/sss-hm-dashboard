@@ -93,7 +93,10 @@ const [originalToursData, setOriginalToursData] = useState([]);
       try {
         setLoading(true);
 
-        const res = await api.get("/dashboard/");
+        const res = await api.get("/dashboard/", {
+          params: { refresh: Date.now() },
+          headers: { "Cache-Control": "no-cache" },
+        });
         const data = res.data;
 
         if (!mounted) return;

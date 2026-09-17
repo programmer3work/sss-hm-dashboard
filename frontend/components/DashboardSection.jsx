@@ -39,13 +39,15 @@ export default function DashboardSection({
     percentage: total ? ((Number(value) / total) * 100).toFixed(1) : "0.0",
   });
 
+  const hasSummary = Object.keys(dashboardSummary).length > 0;
+
   return (
     <>
       <div className="analytics-grid">
         <div className="analytics-card blue">
           <Users size={32} />
           <div>
-            <h2>{dashboardSummary.total_students || 0}</h2>
+            <h2>{hasSummary ? dashboardSummary.total_students ?? 0 : "Loading..."}</h2>
             <p>Total Students</p>
           </div>
         </div>
@@ -53,7 +55,7 @@ export default function DashboardSection({
         <div className="analytics-card green">
           <GraduationCap size={32} />
           <div>
-            <h2>{dashboardSummary.total_teachers || 0}</h2>
+            <h2>{hasSummary ? dashboardSummary.total_teachers ?? 0 : "Loading..."}</h2>
             <p>Total Teachers</p>
           </div>
         </div>
@@ -61,7 +63,9 @@ export default function DashboardSection({
         <div className="analytics-card purple">
           <TrendingUp size={32} />
           <div>
-            <h2>{dashboardSummary.pass_percentage || 0}%</h2>
+            <h2>
+              {hasSummary ? `${dashboardSummary.pass_percentage ?? 0}%` : "Loading..."}
+            </h2>
             <p>Pass Percentage</p>
           </div>
         </div>
@@ -69,7 +73,7 @@ export default function DashboardSection({
         <div className="analytics-card orange">
           <BookOpen size={32} />
           <div>
-            <h2>{dashboardSummary.total_classes || 0}</h2>
+            <h2>{hasSummary ? dashboardSummary.total_classes ?? 0 : "Loading..."}</h2>
             <p>Total Classes</p>
           </div>
         </div>
